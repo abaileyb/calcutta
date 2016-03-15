@@ -3,12 +3,14 @@ PERCENTAGES = {"32": .005, "16": .0175, "8": .0425, "4": .12, "2":.15, "1":.22}
 
 #NEED TO ADD THE PLAY IN 16 SEED WINNERS
 LOWERSOUTH = ['austin peay', 'unc asheville', 'buffalo', 'hawaii']
-LOWERWEST = ['csu bakersfield', 'green bay', 'unc wilmington', ''] 
+LOWERWEST = ['csu bakersfield', 'green bay', 'unc wilmington'] 
 LOWERMIDWEST = ['hampton', 'middle tennessee', 'fresno st.', 'iona']
-LOWEREAST = ['weber st.', 's.f. austin', 'stony brook', '']
+LOWEREAST = ['weber st.', 's.f. austin', 'stony brook']
+
+PREVIOUS = 2553
 
 class Pot(object):
-	def __init__(self, value=0, numteams=0, estimate=2800):
+	def __init__(self, value=0, numteams=0, previous=PREVIOUS):
 		self.value = value
 		self.numteams = numteams
 
@@ -18,19 +20,20 @@ class Pot(object):
 	def get_value(self):
 		return self.value
 
-	def get_estimate(selt):
-		return self.estimate
+	def get_previous(selt):
+		return self.previous
 
 	def add_team(self, value):
 		self.value += value
 		self.numteams += 1
 
-	def update_estimate(self, estimate):
-		self.estimate = estimate
+	#need to write this fn to calculate based on previous
+	def estimate(self):
+		return
 
 
 class teamOdds(object):
-	def __init__(self, name, pct32, pct16, pct8, pct4, pct2, pct1):
+	def __init__(self, name, pct32 = 0, pct16 = 0, pct8 = 0, pct4 = 0, pct2 = 0, pct1 = 0):
 		self.name = name
 		self.pct0win = 100.0 - float(pct32)
 		self.pct1win = float(pct32) - float(pct16)
@@ -142,9 +145,36 @@ def read_KenPom():
 			oddsKenPom[linetemp[1]] = teamOdds(linetemp[1], linetemp[2], linetemp[3], linetemp[4], linetemp[5], linetemp[6], linetemp[7])
 
 
-# def combine_lowseeds(dictionary):
-# 	#combine for each region
-# 	#create new entries in dictionarys
+	#combine for each region
+	#create new entries in dictionarys
+def combine_lowseeds(dictionary):
+	southsum = 0
+	for x in LOWERSOUTH:
+		southsum += dictionary[x].baiScore
+		dictionary.pop(x)
+	dictionary['south dogs'] = teamOdds('south dogs')
+	dictionary['south dogs'].baiScore = southsum
+
+	westsum = 0
+	for x in LOWERWEST:
+		westsum += dictionary[x].baiScore
+		dictionary.pop(x)
+	dictionary['west dogs'] = teamOdds('west dogs')
+	dictionary['west dogs'].baiScore = westsum
+
+	midwestsum = 0
+	for x in LOWERMIDWEST:
+		midwestsum += dictionary[x].baiScore
+		dictionary.pop(x)
+	dictionary['midwest dogs'] = teamOdds('midwest dogs')
+	dictionary['midwest dogs'].baiScore = midwestsum
+
+	eastsum = 0
+	for x in LOWEREAST:
+		eastsum += dictionary[x].baiScore
+		dictionary.pop(x)
+	dictionary['east dogs'] = teamOdds('east dogs')
+	dictionary['east dogs'].baiScore = eastsum
 
 
 
@@ -153,6 +183,7 @@ def read_KenPom():
 read_KenPom()
 
 
+combine_lowseeds(oddsKenPom)
 
 count = 0
 for x in oddsKenPom:
@@ -165,12 +196,13 @@ print count
 print 'WELCOME MESSAGE GOES HEREli'
 
 
-while 1:
-	s = raw_input("enter a command:  ")
-	if s == 'stop':
-		break
-	else:
-		print 'hi'
+# while 1:
+# 	s = raw_input("enter a command:  ")
+# 	if s == 'stop':
+# 		break
+# 	elif s[0] == 'a':
+
+
 
 
 
