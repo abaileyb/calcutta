@@ -5,14 +5,15 @@ PERCENTAGES = {"32": .005, "16": .0175, "8": .0425, "4": .12, "2":.15, "1":.22}
 LOWERSOUTH = ['austin peay', 'unc asheville', 'buffalo', 'hawaii']
 LOWERWEST = ['csu bakersfield', 'green bay', 'unc wilmington'] 
 LOWERMIDWEST = ['hampton', 'middle tennessee', 'fresno st.', 'iona']
-LOWEREAST = ['weber st.', 's.f. austin', 'stony brook']
+LOWEREAST = ['weber st.', 's. f. austin', 'stony brook']
 
-PREVIOUS = 2553
-
+PREVIOUS = 2553.0
+PREVIOUS_BIDS_AFTER4S = [0.0, 40.0, 94.0, 174.0, 258.0, 321.0, 403.0, 529.0, 642.0, 783.0, 1000.0, 1295.0, 1700.0, 2553.0]
 class Pot(object):
 	def __init__(self, value=0, numteams=0, previous=PREVIOUS):
 		self.value = value
 		self.numteams = numteams
+		self.estimate = previous
 
 	def num_teams(self):
 		return self.numteams
@@ -20,16 +21,23 @@ class Pot(object):
 	def get_value(self):
 		return self.value
 
-	def get_previous(selt):
-		return self.previous
+	def get_estimate(self):
+		return self.estimate
 
 	def add_team(self, value):
 		self.value += value
 		self.numteams += 1
+		if (self.numteams % 4) == 0:
+			self.update_estimate(self.numteams/4)
 
 	#need to write this fn to calculate based on previous
-	def estimate(self):
-		return
+	def update_estimate(self, spot):
+		curval = self.value
+		preval = PREVIOUS_BIDS_AFTER4S[spot]
+		ratio = curval/preval
+		self.estimate = PREVIOUS * ratio
+
+		
 
 
 class teamOdds(object):
@@ -46,9 +54,9 @@ class teamOdds(object):
 
 		self.baiScore = self.pct1win * PERCENTAGES['32'] + self.pct2win * PERCENTAGES['16'] + self.pct3win * PERCENTAGES['8'] + self.pct4win * PERCENTAGES['4'] + self.pct5win * PERCENTAGES['2'] + self.pct6win * PERCENTAGES['1'] 
 	
-	#TODO: NEED TO FIX THIS PRINTING FUNCTION
+
 	def __str__(self):
-		return "%s has a Bai Score of %s. A %s pct chance to reach rd32, %s to reaching sweet 16, %s to reach elite 8, %s to reach final four, %s to be runner up, and %s to win the ship " %(self.name, self.baiScore, self.pct32, self.pct16, self.pct8, self.pct4, self.pct2, self.pct1)
+		return "%s has a Bai Score of %s. A %s pct chance to reach rd32, %s to reaching sweet 16, %s to reach elite 8, %s to reach final four, %s to be runner up, and %s to win the ship " %(self.name, self.baiScore, self.pct1win, self.pct2win, self.pct3win, self.pct4win, self.pct5win, self.pct6win)
 
 
 
@@ -56,7 +64,7 @@ class teamOdds(object):
 	##given the odds of reaching each round and the current size of the pot (or an estimate), determine a teams payout
 	##uses expected value to determine payout based on the pot.
 	def predict_payout(self, pot):
-		return pot/100 * self.baiScore
+		return pot.get_estimate()/100 * self.baiScore
 
 
 def calc_current_payouts(pot):
@@ -181,26 +189,60 @@ def combine_lowseeds(dictionary):
 
 
 read_KenPom()
-
-
+pot = Pot()
 combine_lowseeds(oddsKenPom)
 
-count = 0
-for x in oddsKenPom:
-	count += oddsKenPom[x].predict_payout(1000)
-	print x, oddsKenPom[x].predict_payout(1000)
-print 
-print count
+
+# pot.estimate = 1000
+# count = 0
+# for x in oddsKenPom:
+# 	count += oddsKenPom[x].predict_payout(pot)
+# 	print x, oddsKenPom[x].predict_payout(pot)
+# print 
+# print count
+
+print
+print '~~~~~~~~~WELCOME TO THE ALPHA VERSION OF CALCUTTA BOT~~~~~~~~'
+print
+print 'the bot expects the auction to begin w/ the dogs and move to the lower seeds'
+print '---please track all bids w/ the command "a *price*" like "a 5" to indicate a team sold for $5---'
+print 'the pot estimation will update every 4 bids, or after eachof the 13 rounds'
+print '---to check the value of a team based on the current estimate pot size use the command "t *team*"---'
+print 'team must be all lower case. ie "t kansas" to get the current value of kansas'
+print '---to assess the value of a team with a manual pot estimation, use the command "m *estimate* *team*---'
+print '---to quit please use the command "stop" ---'
+
+print
+print
 
 
-print 'WELCOME MESSAGE GOES HEREli'
 
 
-# while 1:
-# 	s = raw_input("enter a command:  ")
-# 	if s == 'stop':
-# 		break
-# 	elif s[0] == 'a':
+# #testing
+# print pot.get_value()
+# print pot.get_estimate()
+
+# pot.add_team(7)
+# pot.add_team(10)
+# pot.add_team(15)
+# pot.add_team(20)
+
+# print pot.get_estimate()
+# #end testing
+
+while 1:
+	s = raw_input("enter a command:  ")
+	if s == 'stop':
+		break
+	elif s[0] == 'a':
+		pot.add_team(float(s[2:]))
+		print '%i teams have been sold. The current pot value is %f' % (pot.num_teams(), pot.get_value())
+	elif s[0] == 't':
+		team = s[2:]
+		print "based on the current estimated pot of %f, %s is expected to yield $%f" % (pot.get_estimate(), team, oddsKenPom[team].predict_payout(pot))
+	elif s[0] == 'm':
+		l = s.split()
+		
 
 
 
