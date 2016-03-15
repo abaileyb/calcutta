@@ -1,4 +1,11 @@
-PERCENTAGES = {"32": .0005, "16": .0175, "8": .0425, "4": .12, "2":.15, "1":.22}
+PERCENTAGES = {"32": .005, "16": .0175, "8": .0425, "4": .12, "2":.15, "1":.22}
+
+
+#NEED TO ADD THE PLAY IN 16 SEED WINNERS
+LOWERSOUTH = ['austin peay', 'unc asheville', 'buffalo', 'hawaii']
+LOWERWEST = ['csu bakersfield', 'green bay', 'unc wilmington', ''] 
+LOWERMIDWEST = ['hampton', 'middle tennessee', 'fresno st.', 'iona']
+LOWEREAST = ['weber st.', 's.f. austin', 'stony brook', '']
 
 class Pot(object):
 	def __init__(self, value=0, numteams=0, estimate=2800):
@@ -25,22 +32,28 @@ class Pot(object):
 class teamOdds(object):
 	def __init__(self, name, pct32, pct16, pct8, pct4, pct2, pct1):
 		self.name = name
-		self.pct32 = pct32
-		self.pct16 = pct16
-		self.pct8 = pct8
-		self.pct4 = pct4 
-		self.pct2 = pct2
-		self.pct1 = pct1
+		self.pct0win = 100.0 - float(pct32)
+		self.pct1win = float(pct32) - float(pct16)
+		self.pct2win = float(pct16) - float(pct8)
+		self.pct3win = float(pct8) - float(pct4)
+		self.pct4win = float(pct4) - float(pct2)
+		self.pct5win = float(pct2) - float(pct1)
+		self.pct6win = float(pct1)
+		
 
-	def __str__(self):
-		return "%s has a %s pct chance to reach rd32, %s to reaching sweet 16, %s to reach elite 8, %s to reach final four, %s to be runner up, and %s to win the ship " %(self.name, self.pct32, self.pct16, self.pct8, self.pct4, self.pct2, self.pct1)
-	#need to come up with the algorithm to calculate expected value based on the different odds. 
+		self.baiScore = self.pct1win * PERCENTAGES['32'] + self.pct2win * PERCENTAGES['16'] + self.pct3win * PERCENTAGES['8'] + self.pct4win * PERCENTAGES['4'] + self.pct5win * PERCENTAGES['2'] + self.pct6win * PERCENTAGES['1'] 
 	
+	#TODO: NEED TO FIX THIS PRINTING FUNCTION
+	def __str__(self):
+		return "%s has a Bai Score of %s. A %s pct chance to reach rd32, %s to reaching sweet 16, %s to reach elite 8, %s to reach final four, %s to be runner up, and %s to win the ship " %(self.name, self.baiScore, self.pct32, self.pct16, self.pct8, self.pct4, self.pct2, self.pct1)
+
+
+
 
 	##given the odds of reaching each round and the current size of the pot (or an estimate), determine a teams payout
 	##uses expected value to determine payout based on the pot.
-	#def predict_payout(self, pot):
-
+	def predict_payout(self, pot):
+		return pot/100 * self.baiScore
 
 
 def calc_current_payouts(pot):
@@ -116,18 +129,48 @@ def read_KenPom():
 	with open('kenpom.txt') as f:
 		for line in f:
 			linetemp = line.split()
-			if linetemp[2][0].isalpha():
+			while linetemp[2][0].isalpha():
 				linetemp[1] = linetemp[1] + " " + linetemp[2]
 				linetemp.pop(2)
 			linetemp[1] = linetemp[1].lower()
-			#print linetemp
-			oddsKenPom[linetemp[1]] = teamOdds(linetemp[1], linetemp[2], linetemp[3], linetemp[4], linetemp[5], linetemp[6], linetemp[6])
+
+			if linetemp[6][0] == '<' :
+				linetemp[6] = linetemp[6][1:]
+			if linetemp[7][0] == '<':
+				linetemp[7] = linetemp[7][1:]
+
+			oddsKenPom[linetemp[1]] = teamOdds(linetemp[1], linetemp[2], linetemp[3], linetemp[4], linetemp[5], linetemp[6], linetemp[7])
+
+
+# def combine_lowseeds(dictionary):
+# 	#combine for each region
+# 	#create new entries in dictionarys
+
+
+
+
 
 read_KenPom()
 
 
 
+count = 0
+for x in oddsKenPom:
+	count += oddsKenPom[x].predict_payout(1000)
+	print x, oddsKenPom[x].predict_payout(1000)
+print 
+print count
 
+
+print 'WELCOME MESSAGE GOES HEREli'
+
+
+while 1:
+	s = raw_input("enter a command:  ")
+	if s == 'stop':
+		break
+	else:
+		print 'hi'
 
 
 
