@@ -1,13 +1,13 @@
-PERCENTAGES = {"32": .005, "16": .0175, "8": .0425, "4": .12, "2":.15, "1":.22}
+PERCENTAGES = {"32": .005, "16": .0175, "8": .0425, "4": .12, "2":.16, "1":.16}
 
 
 #NEED TO ADD THE PLAY IN 16 SEED WINNERS
 LOWERSOUTH = ['austin peay', 'unc asheville', 'buffalo', 'hawaii']
-LOWERWEST = ['csu bakersfield', 'green bay', 'unc wilmington'] 
+LOWERWEST = ['csu bakersfield', 'green bay', 'unc wilmington', 'holy cross', 'southern'] 
 LOWERMIDWEST = ['hampton', 'middle tennessee', 'fresno st.', 'iona']
-LOWEREAST = ['weber st.', 's. f. austin', 'stony brook', 'fgcu']
+LOWEREAST = ['weber st.', 's. f. austin', 'stony brook', 'fcgu', 'f. dickinson']
 
-PREVIOUS = 2553.0
+PREVIOUS = 1826.0
 PREVIOUS_BIDS_AFTER4S = [0.0, 40.0, 94.0, 174.0, 258.0, 321.0, 403.0, 529.0, 642.0, 783.0, 1000.0, 1295.0, 1700.0, 2553.0]
 class Pot(object):
 	def __init__(self, value=0, numteams=0, previous=PREVIOUS):
@@ -27,8 +27,8 @@ class Pot(object):
 	def add_team(self, value):
 		self.value += value
 		self.numteams += 1
-		if (self.numteams % 4) == 0:
-			self.update_estimate(self.numteams/4)
+		# if (self.numteams % 4) == 0:
+		# 	self.update_estimate(self.numteams/4)
 
 	#need to write this fn to calculate based on previous
 	def update_estimate(self, spot):
@@ -64,7 +64,7 @@ class teamOdds(object):
 	##given the odds of reaching each round and the current size of the pot (or an estimate), determine a teams payout
 	##uses expected value to determine payout based on the pot.
 	def predict_payout(self, pot):
-		return pot.get_estimate()/100 * self.baiScore
+		return 1826/100 * self.baiScore
 
 
 def calc_current_payouts(pot):
@@ -92,7 +92,6 @@ def calc_current_payouts(pot):
 odds538 = {}
 oddsKenPom = {}
 
-oddsCombo = {}
 
 
 #function for manual input
@@ -137,12 +136,11 @@ def getestvalue(teamname, potvalue):
 
 
 #function designed to read data copy-pasted from the KenPom website
-#combines teamname in to one list element. Also removes the < sign where neccessary
 def read_KenPom():
 	with open('kenpom.txt') as f:
 		for line in f:
 			linetemp = line.split()
-			while linetemp[2][0].isalpha(): 
+			while linetemp[2][0].isalpha():
 				linetemp[1] = linetemp[1] + " " + linetemp[2]
 				linetemp.pop(2)
 			linetemp[1] = linetemp[1].lower()
@@ -153,17 +151,6 @@ def read_KenPom():
 				linetemp[7] = linetemp[7][1:]
 
 			oddsKenPom[linetemp[1]] = teamOdds(linetemp[1], linetemp[2], linetemp[3], linetemp[4], linetemp[5], linetemp[6], linetemp[7])
-
-def read_538():
-	with open('538.txt') as f:
-		for line in f:
-			linetemp = line.split()
-			while linetemp[1][0].isalpha():
-				linetemp[0] = linetemp[0] + " " + linetemp[1]
-				linetemp.pop(1)
-			linetemp[0] = linetemp[0].lower()
-
-			odds538[linetemp[0]] = teamOdds(linetemp[0], linetemp[1], linetemp[2], linetemp[3], linetemp[4], linetemp[5], linetemp[6])
 
 
 	#combine for each region
@@ -197,26 +184,25 @@ def combine_lowseeds(dictionary):
 	dictionary['east dogs'] = teamOdds('east dogs')
 	dictionary['east dogs'].baiScore = eastsum
 
+def combine_elevens(dictionary):
+	dictionary['eleven south'] = teamOdds('eleven south')
+	dictionary['eleven south'].baiScore = dictionary['vanderbilt'].baiScore + dictionary['wichita st.'].baiScore
+	dictionary.pop('vanderbilt')
+	dictionary.pop('wichita st.')
+
+	dictionary['eleven midwest'] = teamOdds('eleven midwest')
+	dictionary['eleven midwest'].baiScore = dictionary['michigan'].baiScore + dictionary['tulsa'].baiScore
+	dictionary.pop('michigan')
+	dictionary.pop('tulsa')
+
 
 
 
 
 read_KenPom()
-read_538()
 pot = Pot()
-
 combine_lowseeds(oddsKenPom)
-combine_lowseeds(odds538)
-
-#check keys
-for k in odds538:
-	if k in oddsKenPom:
-		oddsCombo[k] = (oddsKenPom[k].baiScore + 100 * odds538[k].baiScore) / 2
-
-
-for k in oddsCombo:
-	print k, (oddsCombo[k]/100 * pot.get_estimate())
-
+combine_elevens(oddsKenPom)
 
 # pot.estimate = 1000
 # count = 0
@@ -264,18 +250,10 @@ while 1:
 		print '%i teams have been sold. The current pot value is %f' % (pot.num_teams(), pot.get_value())
 	elif s[0] == 't':
 		team = s[2:]
-		if team in oddsKenPom:
-			print "based on the current estimated pot of %f, %s is expected to yield $%f" % (pot.get_estimate(), team, oddsKenPom[team].predict_payout(pot))
-		else:
-			print 'team not found'
-	elif s[0] == 'm':
-		l = s.split()
-		est = l[2]
-		team = l[1]
-		if team in oddsKenPom:
-			print "based on the current estimated pot of %f, %s is expected to yield $%f" % (est, team, oddsKenPom[team].predict_payout(pot))
-		else:
-			print 'team not found'
+		print "based on the current estimated pot of %f, %s is expected to yield $%f" % (pot.get_estimate(), team, oddsKenPom[team].predict_payout(pot))
+	# elif s[0] == 'm':
+	# 	l = s.split()
+	# 	est = 
 
 
 
